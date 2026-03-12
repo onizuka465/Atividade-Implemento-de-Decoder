@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+
+def create_casual_mask (seq_len):
+    mask = np.triu(np.ones((seq_len, seq_len)), k=1)
+    mask[mask == 1] = -np.inf
+    return mask
+
+seq_len = 5
+
+Q = np.random.randn (seq_len, seq_len)
+K = np.random.randn (seq_len, seq_len)
+M = create_casual_mask(seq_len)
+
+prova = (Q @ K) + M 
+
+def softmax(x):
+    e_x = np.exp(x)     
+    return e_x / np.sum(e_x, axis=-1, keepdims=True)
+
+resultado= softmax(prova)
+print (resultado)
+
+encoder_output = np.random.randn (1, 10, 512)
+decoder_state = np.random.randn (1, 4, 512)
+
+d_model = 512
+
+WQ = np.random.randn(d_model, d_model)
+WK = np.random.randn(d_model, d_model)
+WV = np.random.randn(d_model, d_model)
+
+
+def cross_attention(encoder_output, decoder_state):
+    Q = decoder_state @ WQ
+    K = encoder_output @ WK
+    V = encoder_output @ WV
+    K_T = K.transpose (0, 2, 1)
+    scores = Q @ K_T
+    scores_scaled = scores / np.sqrt(d_model)
+    weigths = softmax(scores_scaled)
+    return weigths @ V
+
+output = cross_attention (encoder_output, decoder_state)
+print ("shape do output:", output.shape)
+
+vocab_size = 10000
+
+def generate_next_token (current_sequence, encoder_output):
+    logits = np.random.randn(vocab_size)
+    return softmax(logits)
+
+sequence = ["<START>"]
+
+while True:
+    probs = generate_next_token (sequence, encoder_output)
+    next_token = np.argmax (probs)
+    if next_token == 0:
+        sequence.append ("<EOS>")
+        break
+
+    sequence.append(next_token)
+
+print("Frase Gerada:", sequence)
+
